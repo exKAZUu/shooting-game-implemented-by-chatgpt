@@ -24,16 +24,18 @@ class Spaceship {
 }
 
 class Bullet {
-  constructor(x, y) {
+  constructor(x, y, dx, dy) {
     this.width = 5;
     this.height = 10;
     this.x = x;
     this.y = y;
-    this.speed = 8;
+    this.dx = dx;
+    this.dy = dy;
   }
 
   update() {
-    this.y -= this.speed;
+    this.x += this.dx;
+    this.y += this.dy;
   }
 
   draw() {
@@ -48,11 +50,30 @@ class Enemy {
     this.height = 20;
     this.x = x;
     this.y = y;
+    this.speed = 1;
+  }
+
+  update() {
+    this.x += this.speed;
   }
 
   draw() {
     ctx.fillStyle = '#f00';
     ctx.fillRect(this.x, this.y, this.width, this.height);
+  }
+
+  fireBullet(bulletsArray) {
+    const bulletSpeed = 4;
+    const numBullets = 8;
+    const angleStep = (2 * Math.PI) / numBullets;
+
+    for (let i = 0; i < numBullets; i++) {
+      const angle = i * angleStep;
+      const dx = bulletSpeed * Math.cos(angle);
+      const dy = bulletSpeed * Math.sin(angle);
+
+      bulletsArray.push(new Bullet(this.x + this.width / 2, this.y + this.height, dx, dy));
+    }
   }
 }
 
@@ -76,6 +97,8 @@ document.addEventListener('keyup', (e) => {
   if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') spaceship.direction = 0;
 });
 
+const enemyBullets = [];
+
 function gameLoop() {
   // Update game state
   spaceship.update();
@@ -84,7 +107,43 @@ function gameLoop() {
     if (bullet.y < -bullet.height) bullets.splice(index, 1);
   });
 
-  // Collision detection
+  // Update enemies and check for edge collisions
+  let changeDirection = false;
+  enemies.forEach((enemy) => {
+    enemy.update();
+    if (enemy.x + enemy.width > canvas.width || enemy.x < 0) {
+      changeDirection = true;
+    }
+  });
+
+  // Fire bullets from enemies periodically
+  if (Math.random() < 0.01) {
+    const randomEnemy = enemies[Math.floor(Math.random() * enemies.length)];
+    randomEnemy.fireBullet(enemyBullets);
+  }
+
+  // Update enemy bullets and remove off-screen bullets
+  enemyBullets.forEach((bullet) => bullet.update());
+  enemyBullets.forEach((bullet, index) => {
+    if (
+      bullet.x < -bullet.width ||
+      bullet.x > canvas.width ||
+      bullet.y < -bullet.height ||
+      bullet.y > canvas.height
+    ) {
+      enemyBullets.splice(index, 1);
+    }
+  });
+
+  // Change direction and move downward if an edge collision is detected
+  if (changeDirection) {
+    enemies.forEach((enemy) => {
+      enemy.speed = -enemy.speed;
+      enemy.y += enemy.height;
+    });
+  }
+
+  // Collision detection for bullets and enemies
   bullets.forEach((bullet, bIndex) => {
     enemies.forEach((enemy, eIndex) => {
       if (
@@ -105,6 +164,7 @@ function gameLoop() {
   // Draw game elements
   spaceship.draw();
   bullets.forEach((bullet) => bullet.draw());
+  enemyBullets.forEach((bullet) => bullet.draw());
   enemies.forEach((enemy) => enemy.draw());
 
   // Request the next frame
@@ -113,4 +173,3 @@ function gameLoop() {
 
 // Start the game loop
 gameLoop();
-
