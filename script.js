@@ -89,7 +89,9 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'ArrowLeft') spaceship.direction = -1;
   if (e.key === 'ArrowRight') spaceship.direction = 1;
   if (e.key === ' ' || e.key === 'Space') {
-    bullets.push(new Bullet(spaceship.x + spaceship.width / 2 - 2.5, spaceship.y));
+    const dx = 0;
+    const dy = -8;
+    bullets.push(new Bullet(spaceship.x + spaceship.width / 2 - 2.5, spaceship.y, dx, dy));
   }
 });
 
