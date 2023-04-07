@@ -156,7 +156,7 @@ function gameLoop() {
   }
 
   // Fire bullets from enemies periodically
-  if (Math.random() < 0.01) {
+  if (enemies.length > 0 && Math.random() < 0.01) {
     const randomEnemy = enemies[Math.floor(Math.random() * enemies.length)];
     randomEnemy.fireBullet(enemyBullets);
   }
