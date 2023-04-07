@@ -9,6 +9,7 @@ class Spaceship {
     this.y = canvas.height - this.height - 10;
     this.speed = 5;
     this.direction = 0;
+    this.lives = 3;
   }
 
   update() {
@@ -100,6 +101,7 @@ document.addEventListener('keyup', (e) => {
 });
 
 const enemyBullets = [];
+let gameOver = false;
 
 function gameLoop() {
   // Update game state
@@ -160,6 +162,22 @@ function gameLoop() {
     });
   });
 
+  // Collision detection for spaceship and enemy bullets
+  enemyBullets.forEach((bullet, index) => {
+    if (
+      bullet.x < spaceship.x + spaceship.width &&
+      bullet.x + bullet.width > spaceship.x &&
+      bullet.y < spaceship.y + spaceship.height &&
+      bullet.y + bullet.height > spaceship.y
+    ) {
+      enemyBullets.splice(index, 1);
+      spaceship.lives--;
+      if (spaceship.lives === 0) {
+        gameOver = true;
+      }
+    }
+  });
+
   // Clear the canvas
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -169,8 +187,14 @@ function gameLoop() {
   enemyBullets.forEach((bullet) => bullet.draw());
   enemies.forEach((enemy) => enemy.draw());
 
-  // Request the next frame
-  requestAnimationFrame(gameLoop);
+  if (gameOver) {
+    ctx.fillStyle = '#fff';
+    ctx.font = '48px sans-serif';
+    ctx.fillText('GAME OVER', canvas.width / 2 - 120, canvas.height / 2);
+  } else {
+    // Request the next frame
+    requestAnimationFrame(gameLoop);
+  }
 }
 
 // Start the game loop
