@@ -103,6 +103,12 @@ document.addEventListener('keyup', (e) => {
 const enemyBullets = [];
 let gameOver = false;
 
+function drawLives() {
+  ctx.fillStyle = '#fff';
+  ctx.font = '16px sans-serif';
+  ctx.fillText(`Lives: ${spaceship.lives}`, 10, 20);
+}
+
 function gameLoop() {
   // Update game state
   spaceship.update();
@@ -180,6 +186,9 @@ function gameLoop() {
 
   // Clear the canvas
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Draw lives
+  drawLives();
 
   // Draw game elements
   spaceship.draw();
