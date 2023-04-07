@@ -78,9 +78,30 @@ class Enemy {
   }
 }
 
+class Boss {
+  constructor(x, y) {
+    this.width = 80;
+    this.height = 40;
+    this.x = x;
+    this.y = y;
+    this.speed = 1.5;
+    this.health = 10;
+  }
+
+  update() {
+    this.x += this.speed;
+  }
+
+  draw() {
+    ctx.fillStyle = '#a00';
+    ctx.fillRect(this.x, this.y, this.width, this.height);
+  }
+}
+
 const spaceship = new Spaceship();
 const bullets = [];
 const enemies = [];
+let boss = null;
 
 for (let i = 0; i < 5; i++) {
   enemies.push(new Enemy(20 + i * 100, 50));
@@ -126,12 +147,20 @@ function gameLoop() {
     }
   });
 
+  // Change direction and move downward if an edge collision is detected
+  if (changeDirection) {
+    enemies.forEach((enemy) => {
+      enemy.speed = -enemy.speed;
+      enemy.y += enemy.height;
+    });
+  }
+
   // Fire bullets from enemies periodically
   if (Math.random() < 0.01) {
     const randomEnemy = enemies[Math.floor(Math.random() * enemies.length)];
     randomEnemy.fireBullet(enemyBullets);
   }
-
+  
   // Update enemy bullets and remove off-screen bullets
   enemyBullets.forEach((bullet) => bullet.update());
   enemyBullets.forEach((bullet, index) => {
@@ -144,13 +173,22 @@ function gameLoop() {
       enemyBullets.splice(index, 1);
     }
   });
+  
+  // Spawn the boss if there are no more enemies
+  if (enemies.length === 0 && boss === null) {
+    boss = new Boss(canvas.width / 2 - 40, 20);
+  }
 
-  // Change direction and move downward if an edge collision is detected
-  if (changeDirection) {
-    enemies.forEach((enemy) => {
-      enemy.speed = -enemy.speed;
-      enemy.y += enemy.height;
-    });
+  // Update and draw the boss
+  if (boss) {
+    boss.update();
+    boss.draw();
+
+    // Change direction and move downward if the boss hits the edge of the canvas
+    if (boss.x + boss.width > canvas.width || boss.x < 0) {
+      boss.speed = -boss.speed;
+      boss.y += boss.height;
+    }
   }
 
   // Collision detection for bullets and enemies
@@ -184,6 +222,25 @@ function gameLoop() {
     }
   });
 
+  // Collision detection for bullets and the boss
+  if (boss) {
+    bullets.forEach((bullet, index) => {
+      if (
+        bullet.x < boss.x + boss.width &&
+        bullet.x + bullet.width > boss.x &&
+        bullet.y < boss.y + boss.height &&
+        bullet.y + bullet.height > boss.y
+      ) {
+        bullets.splice(index, 1);
+        boss.health--;
+
+        if (boss.health === 0) {
+          boss = null;
+        }
+      }
+    });
+  }
+  
   // Clear the canvas
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
