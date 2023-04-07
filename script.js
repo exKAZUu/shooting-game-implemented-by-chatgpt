@@ -40,10 +40,14 @@ class Bullet {
   }
 
   draw() {
+    console.log(this.x, this.y, this.width, this.height);
     ctx.fillStyle = '#ff0';
     ctx.fillRect(this.x, this.y, this.width, this.height);
   }
 }
+
+Bullet.defaultWidth = 5;
+Bullet.defaultHeight = 10;
 
 class Enemy {
   constructor(x, y) {
@@ -95,6 +99,29 @@ class Boss {
   draw() {
     ctx.fillStyle = '#a00';
     ctx.fillRect(this.x, this.y, this.width, this.height);
+  }
+
+  fireBullets(bulletsArray) {
+    console.log('fireBullets', bulletsArray);
+    const bulletSpeed = 3;
+    const directions = [
+      { x: -1, y: 1 },
+      { x: 0, y: 1 },
+      { x: 1, y: 1 },
+      { x: -0.5, y: 1 },
+      { x: 0.5, y: 1 },
+    ];
+  
+    directions.forEach((dir) => {
+      bulletsArray.push(
+        new Bullet(
+          this.x + this.width / 2 - Bullet.defaultWidth / 2,
+          this.y + this.height,
+          dir.x * bulletSpeed,
+          dir.y * bulletSpeed
+        )
+      );
+    });
   }
 }
 
@@ -160,7 +187,12 @@ function gameLoop() {
     const randomEnemy = enemies[Math.floor(Math.random() * enemies.length)];
     randomEnemy.fireBullet(enemyBullets);
   }
-  
+
+  // Fire bullets from the boss periodically
+  if (boss && Math.random() < 0.01) {
+    boss.fireBullets(enemyBullets);
+  }
+
   // Update enemy bullets and remove off-screen bullets
   enemyBullets.forEach((bullet) => bullet.update());
   enemyBullets.forEach((bullet, index) => {
@@ -173,16 +205,10 @@ function gameLoop() {
       enemyBullets.splice(index, 1);
     }
   });
-  
-  // Spawn the boss if there are no more enemies
-  if (enemies.length === 0 && boss === null) {
-    boss = new Boss(canvas.width / 2 - 40, 20);
-  }
 
   // Update and draw the boss
   if (boss) {
     boss.update();
-    boss.draw();
 
     // Change direction and move downward if the boss hits the edge of the canvas
     if (boss.x + boss.width > canvas.width || boss.x < 0) {
@@ -222,27 +248,50 @@ function gameLoop() {
     }
   });
 
+  // Spawn the boss if there are no more enemies
+  if (enemies.length === 0 && !boss) {
+    boss = new Boss(canvas.width / 2 - 40, 20);
+  }
+
   // Collision detection for bullets and the boss
   if (boss) {
-    bullets.forEach((bullet, index) => {
+    for (let i = 0; i < bullets.length; i++) {
+      const bullet = bullets[i];
       if (
         bullet.x < boss.x + boss.width &&
         bullet.x + bullet.width > boss.x &&
         bullet.y < boss.y + boss.height &&
         bullet.y + bullet.height > boss.y
       ) {
-        bullets.splice(index, 1);
+        bullets.splice(i, 1);
         boss.health--;
 
         if (boss.health === 0) {
           boss = null;
+          ctx.font = '48px serif';
+          ctx.fillStyle = '#fff';
+          ctx.fillText('GAME CLEAR', canvas.width / 2 - 120, canvas.height / 2);
+          return;
         }
       }
-    });
+    }
   }
-  
+
+  // Check for game clear
+  if (!enemies.length && !boss) {
+    ctx.font = '48px serif';
+    ctx.fillStyle = '#fff';
+    ctx.fillText('GAME CLEAR', canvas.width / 2 - 120, canvas.height / 2);
+    return;
+  }
+
   // Clear the canvas
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Draw the boss
+  if (boss) {
+    boss.draw();
+  }
 
   // Draw lives
   drawLives();
@@ -263,5 +312,4 @@ function gameLoop() {
   }
 }
 
-// Start the game loop
 gameLoop();
